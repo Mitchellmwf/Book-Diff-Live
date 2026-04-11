@@ -10,7 +10,8 @@ import time
 splitChars = r'(?<=[.!?])\s+|\n+'
 #Set to true if you want to keep original site look, but adds a scroll bar
 # When false, page still has css, burt is more plain and easier to compare
-needStyles = False
+global needStyles
+needStyles = st.session_state.needStyles if "needStyles" in st.session_state else True
 
 #functions
 def fetch(url):
@@ -21,7 +22,7 @@ def inline_css(html_bytes, base_url):
 
     #remove head if setting is enabled
     if needStyles == False:
-        for tag in soup.find_all("header"):
+        for tag in soup.find_all("head"):
             tag.decompose()
     # Remove content we dont want to display
     for tag in soup.find_all(["nav", "footer", "header", "h1", "h2", "h3","script"]):
@@ -123,7 +124,7 @@ if "step" not in st.session_state:
 # STEP 1 — Ask for Link 1
 if st.session_state.step == 1:
     #checkbox for needStyles
-    st.session_state.needStyles = st.checkbox("Keep original styles?", value=False)
+    st.session_state.needStyles = st.checkbox("Keep original styles?", value=True)
     needStyles = st.session_state.needStyles
     link1 = st.text_input("Enter Link 1")
     #add button to auto fill links
@@ -189,6 +190,17 @@ elif st.session_state.step == 3:
     highlighted_html = open("template.html", "r", encoding="utf-8").read()
     highlighted_html = highlighted_html.replace("{{page1}}", highlighted1)
     highlighted_html = highlighted_html.replace("{{page2}}", highlighted2)
+    if not needStyles:
+        highlighted_html = highlighted_html.replace("{{customStyles}}", """
+            body div div {
+                        overflow: hidden;
+                        width: auto;
+                    }
+            figcaption, img {
+                max-width: 30vw;
+                height: auto;
+            }
+        """)
 
     st.components.v1.html(highlighted_html, scrolling=True, height=1500)
     st.write(f"Time taken: {time.time() - start:.2f} seconds")
