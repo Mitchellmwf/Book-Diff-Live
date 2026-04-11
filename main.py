@@ -122,6 +122,9 @@ if "step" not in st.session_state:
 
 # STEP 1 — Ask for Link 1
 if st.session_state.step == 1:
+    #checkbox for needStyles
+    st.session_state.needStyles = st.checkbox("Keep original styles?", value=False)
+    needStyles = st.session_state.needStyles
     link1 = st.text_input("Enter Link 1")
     #add button to auto fill links
     if st.button("Fill Test Links"):
