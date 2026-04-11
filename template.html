@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Python automation</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    </head>
+    <body>
+        <style>
+            @media screen and (max-width:950) {
+                body div div {
+                    overflow: hidden;
+                }
+            }
+        </style>
+        <!-- show two grabbed pages side by side-->
+        <div style="display:flex; flex-direction: row;">
+            <div style="padding: 1.5vw; border: 5px solid black; width: 50vw; overflow-x: hidden; box-sizing: border-box; overflow:scroll">
+                {{page1}}
+            </div>
+            <div style="padding: 1.5vw; border: 5px solid black; width: 50vw; overflow-x: hidden; box-sizing: border-box; overflow:scroll">
+                {{page2}}
+            </div>
+        </div>
+        <!-- add back and forward buttons to navigate through the spans-->
+        <div style="position: sticky; bottom: 0; display: flex; justify-content: center; padding: 10px; z-index: 1000;">
+            <button id="prevDiff" class="btn btn-primary mx-2" style="width: 8em">Previous</button>
+            <!-- Give user box to enter which span to go to-->
+            <div style="display: flex; flex-direction: column; align-items: center;">
+                <input type="number" id="diffIndex" style="width: 100px;"  value="0" placeholder="{{diffCount}}" min="0" max="{{diffCount}}">
+                <input type="range" id="diffIndexSlider" style="width: 100px;" value="0" placeholder="{{diffCount}}" min="0" max="{{diffCount}}">
+            </div>
+                <button id="nextDiff" class="btn btn-primary mx-2" style="width: 8em">Next</button>
+            <script>
+                const diffSpans = document.querySelectorAll('span.diff');
+                let currentIndex = -1;
+
+                function highlightCurrentDiff() {
+                    diffSpans.forEach((span, index) => {
+                        span.style.background = index === currentIndex ? 'yellowgreen' : 'yellow';
+                    });
+                }
+                // add event listener to input box to scroll to diff span at index and highlight it
+                document.getElementById('diffIndex').addEventListener('change', (event) => {
+                    const index = parseInt(event.target.value, 10);
+                    if (isNaN(index) || index < 0 || index >= diffSpans.length) return;
+                    currentIndex = index;
+                    document.getElementById('diffIndexSlider').value = currentIndex;
+                    highlightCurrentDiff();
+                    diffSpans[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+                // add event listeners to buttons to scroll to next and previous diff span and highlight it
+                // and update the input box value to the current index
+                document.getElementById('prevDiff').addEventListener('click', () => {
+                    if (currentIndex > 0) {
+                        currentIndex--;
+                    }
+                    else{
+                        currentIndex = diffSpans.length - 1;
+                    }
+                    highlightCurrentDiff();
+                    diffSpans[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    document.getElementById('diffIndex').value = currentIndex;
+                    document.getElementById('diffIndexSlider').value = currentIndex;
+                    
+                });
+                document.getElementById('nextDiff').addEventListener('click', () => {
+                    if (currentIndex < diffSpans.length - 1) {
+                        currentIndex++;
+                    }
+                    else{
+                        currentIndex = 0;
+                    }
+                    highlightCurrentDiff();
+                    diffSpans[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    document.getElementById('diffIndex').value = currentIndex;
+                    document.getElementById('diffIndexSlider').value = currentIndex;
+                });
+                    // add event listener to slider to scroll to diff span at index and highlight it
+                document.getElementById('diffIndexSlider').addEventListener('input', (event) => {
+                    const index = parseInt(event.target.value, 10);
+                    if (isNaN(index) || index < 0 || index >= diffSpans.length) return;
+                    currentIndex = index;
+                    document.getElementById('diffIndex').value = currentIndex;
+                    highlightCurrentDiff();
+                    diffSpans[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+            </script>
+        </div>
+    </body>
+</html>
