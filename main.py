@@ -1,6 +1,5 @@
 import streamlit as st
 import difflib
-from urllib.error import HTTPError, URLError
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import re
@@ -72,21 +71,23 @@ def get_unique_content(list1, list2):
 
 # Function to check if URL is valid and accessible
 def checkURL(url):
-    #Check if links have https:// via regex
     if url is None or not re.match(r'^https?://', url):
         return False
+
     try:
         response = cloudscraper.get(url)
         return response.status_code == 200
-    except (HTTPError, URLError) as e:
+    except Exception:
         return False
+
 
 def urlResponse(url):
     try:
         response = cloudscraper.get(url)
         return f"Status code: {response.status_code}"
-    except HTTPError as e:
-        return f"HTTP Error: {e.code}"
+    except Exception as e:
+        return str(e)
+
 
     
 def normalize(text):
