@@ -27,7 +27,7 @@ def inline_css(html_bytes, base_url):
         for tag in soup.find_all("head"):
             tag.decompose()
     # Remove content we dont want to display
-    for tag in soup.find_all(["nav", "footer", "header", "h1", "h2", "h3"]):
+    for tag in soup.find_all(["nav", "footer", "header"]):
         tag.decompose()
     for tag in soup.find_all(class_=re.compile(r'^(menu|skip-link|screen-reader-text|sidebar|toolbar|toc|nav)')):
         tag.decompose()
@@ -66,8 +66,16 @@ def get_unique_content(list1, list2):
             unique1.update(list1[i1:i2])
             unique2.update(list2[j1:j2])
         # 'equal' blocks are shared, skip them
-    
     return unique1, unique2
+
+def splitNewlines(list):
+    newList = []
+    for item in list:
+        if "\n" in item:
+            newList.extend(item.split("\n"))
+        else:
+            newList.append(item)
+    return newList
 
 # Function to check if URL is valid and accessible
 def checkURL(url):
@@ -190,52 +198,52 @@ elif st.session_state.step == 3:
     st.write("Comparing pages…")
     st.write("Link 1:", st.session_state.link1)
     st.write("Link 2:", st.session_state.link2)
-    link1 = st.session_state.link1
-    link2 = st.session_state.link2
+    with st.spinner("Highlighting differences..."):
+        link1 = st.session_state.link1
+        link2 = st.session_state.link2
 
-    data = fetch(link1)
-    soupifiedData = BeautifulSoup(data, "html.parser")
-    displayedText = soupifiedData.get_text().lower()
-    displayedList = re.split(splitChars, displayedText)
-    displayStrip1 = [line.strip() for line in displayedList]
-
-
-    data2 = fetch(link2)
-    soupifiedData2 = BeautifulSoup(data2, "html.parser")
-    displayedText2 = soupifiedData2.get_text().lower()
-    displayedList2 = re.split(splitChars, displayedText2)
-    displayStrip2 = [line.strip() for line in displayedList2]
-
-    inlined1 = inline_css(data, link1)
-    inlined2 = inline_css(data2, link2)
+        data = fetch(link1)
+        soupifiedData = BeautifulSoup(data, "html.parser")
+        displayedText = soupifiedData.get_text().lower()
+        displayedList = re.split(splitChars, displayedText)
+        displayStrip1 = [line.strip() for line in displayedList]
 
 
-    # then replace your set subtraction with:
-    unique1, unique2 = get_unique_content(displayStrip1, displayStrip2)
-    diffs1 = {d.strip().lower() for d in unique1 if len(d.strip()) > 2}
-    diffs2 = {d.strip().lower() for d in unique2 if len(d.strip()) > 2}
+        data2 = fetch(link2)
+        soupifiedData2 = BeautifulSoup(data2, "html.parser")
+        displayedText2 = soupifiedData2.get_text().lower()
+        displayedList2 = re.split(splitChars, displayedText2)
+        displayStrip2 = [line.strip() for line in displayedList2]
+
+        inlined1 = inline_css(data, link1)
+        inlined2 = inline_css(data2, link2)
+
+        # then replace your set subtraction with:
+        unique1, unique2 = get_unique_content(displayStrip1, displayStrip2)
+        diffs1 = {d.strip().lower() for d in unique1 if len(d.strip()) > 3}
+        diffs2 = {d.strip().lower() for d in unique2 if len(d.strip()) > 3}
 
 
-    highlighted1 = addDiffStyles(inlined1, diffs1)
-    highlighted2 = addDiffStyles(inlined2, diffs2)
+        highlighted1 = addDiffStyles(inlined1, splitNewlines(diffs1))
+        highlighted2 = addDiffStyles(inlined2, splitNewlines(diffs2))
 
 
-    highlighted_html = open("template.html", "r", encoding="utf-8").read()
-    highlighted_html = highlighted_html.replace("{{page1}}", highlighted1)
-    highlighted_html = highlighted_html.replace("{{page2}}", highlighted2)
-    if not needStyles:
-        highlighted_html = highlighted_html.replace("{{customStyles}}", """
-            body div div {
-                        overflow: hidden;
-                        width: auto;
-                    }
-            figcaption, img {
-                max-width: 30vw;
-                height: auto;
-            }
-        """)
+        highlighted_html = open("template.html", "r", encoding="utf-8").read()
+        highlighted_html = highlighted_html.replace("{{page1}}", highlighted1)
+        highlighted_html = highlighted_html.replace("{{page2}}", highlighted2)
+        if not needStyles:
+            highlighted_html = highlighted_html.replace("{{customStyles}}", """
+                body div div {
+                            overflow: hidden;
+                            width: auto;
+                        }
+                figcaption, img {
+                    max-width: 30vw;
+                    height: auto;
+                }
+            """)
 
-    st.components.v1.html(highlighted_html, scrolling=True, height=1500)
+    st.components.v1.html(highlighted_html, scrolling=True, height=800)
     st.write(f"Time taken: {time.time() - start:.2f} seconds")
     if st.button("Reset"):
         st.session_state.step = 1
