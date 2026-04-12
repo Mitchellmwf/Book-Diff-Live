@@ -1,10 +1,12 @@
 import streamlit as st
 import difflib
-import urllib.request
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import re
 import time
+
 
 #Variables
 splitChars = r'(?<=[.!?])\s+|\n+'
@@ -13,9 +15,13 @@ splitChars = r'(?<=[.!?])\s+|\n+'
 global needStyles
 needStyles = st.session_state.needStyles if "needStyles" in st.session_state else True
 
+#tell site we are a browser, some sites block non-browser user agents
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0'}
+
 #functions
 def fetch(url):
-    return urllib.request.urlopen(url).read()
+    return urlopen(Request(url, headers=headers)).read()
+    #return urllib.request.urlopen(url).read()
 
 def inline_css(html_bytes, base_url):
     soup = BeautifulSoup(html_bytes, "html.parser")
@@ -25,7 +31,7 @@ def inline_css(html_bytes, base_url):
         for tag in soup.find_all("head"):
             tag.decompose()
     # Remove content we dont want to display
-    for tag in soup.find_all(["nav", "footer", "header", "h1", "h2", "h3","script"]):
+    for tag in soup.find_all(["nav", "footer", "header", "h1", "h2", "h3"]):
         tag.decompose()
     for tag in soup.find_all(class_=re.compile(r'^(menu|skip-link|screen-reader-text|sidebar|toolbar|toc|nav)')):
         tag.decompose()
@@ -67,6 +73,31 @@ def get_unique_content(list1, list2):
     
     return unique1, unique2
 
+# Function to check if URL is valid and accessible
+def checkURL(url):
+    #Check if links have https:// via regex
+    if url is None or not re.match(r'^https?://', url):
+        return False
+    req = Request(url, headers=headers)
+    try:
+        response = urlopen(req)
+        return response.status == 200
+    except HTTPError as e:
+        return False
+    except URLError as e:
+        return False
+
+def urlResponse(url):
+    req = Request(url, headers=headers)
+
+    try:
+        response = urlopen(req)
+        return response.status
+    except HTTPError as e:
+        return e.code          # e.g., 403, 404, 500
+    except URLError as e:
+        return f"URL error: {e.reason}"
+    
 def normalize(text):
     return re.sub(r'^[.!?,;:\s]+|[.!?,;:\s]+$', '', text.strip().lower())
 
@@ -137,7 +168,7 @@ if st.session_state.step == 1:
         st.rerun()
 
     if st.button("Next") and link1.strip():
-        st.session_state.link1 = link1
+        st.session_state.link1 = link1.strip()
         st.session_state.step = 2
         st.rerun()
 
@@ -147,9 +178,18 @@ elif st.session_state.step == 2:
     link2 = st.text_input("Enter Link 2")
 
     if st.button("Compare") and link2.strip():
-        st.session_state.link2 = link2
-        st.session_state.step = 3
-        st.rerun()
+        st.session_state.link2 = link2.strip()
+
+        # Validate URLs
+        result1 = checkURL(st.session_state.link1)
+        result2 = checkURL(st.session_state.link2)
+        if not result1:
+            st.error(f"Link 1 is not valid or accessible. {urlResponse(st.session_state.link1)}")
+        if not result2:
+            st.error(f"Link 2 is not valid or accessible. {urlResponse(st.session_state.link2)}")
+        if result1 and result2:
+            st.session_state.step = 3
+            st.rerun()
 
 # STEP 3 — Show results
 elif st.session_state.step == 3:
