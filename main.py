@@ -247,3 +247,8 @@ elif st.session_state.step == 3:
     if st.button("Reset"):
         st.session_state.step = 1
         st.rerun()
+    #if the user wants to switch between styled and plain, we can just re-run step 3 with the new setting
+    if st.button(f"Compare {'without' if needStyles else 'with'} styles"):
+        st.session_state.needStyles = not needStyles
+        st.session_state.step = 3
+        st.rerun()
