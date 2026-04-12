@@ -1,11 +1,10 @@
 import streamlit as st
 import difflib
-from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import re
 import time
+import cloudscraper
 
 
 #Variables
@@ -15,13 +14,10 @@ splitChars = r'(?<=[.!?])\s+|\n+'
 global needStyles
 needStyles = st.session_state.needStyles if "needStyles" in st.session_state else True
 
-#tell site we are a browser, some sites block non-browser user agents
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0'}
 
 #functions
 def fetch(url):
-    return urlopen(Request(url, headers=headers)).read()
-    #return urllib.request.urlopen(url).read()
+    return cloudscraper.get(url).content
 
 def inline_css(html_bytes, base_url):
     soup = BeautifulSoup(html_bytes, "html.parser")
@@ -75,28 +71,24 @@ def get_unique_content(list1, list2):
 
 # Function to check if URL is valid and accessible
 def checkURL(url):
-    #Check if links have https:// via regex
     if url is None or not re.match(r'^https?://', url):
         return False
-    req = Request(url, headers=headers)
+
     try:
-        response = urlopen(req)
-        return response.status == 200
-    except HTTPError as e:
+        response = cloudscraper.get(url)
+        return response.status_code == 200
+    except Exception:
         return False
-    except URLError as e:
-        return False
+
 
 def urlResponse(url):
-    req = Request(url, headers=headers)
-
     try:
-        response = urlopen(req)
-        return response.status
-    except HTTPError as e:
-        return e.code          # e.g., 403, 404, 500
-    except URLError as e:
-        return f"URL error: {e.reason}"
+        response = cloudscraper.get(url)
+        return f"Status code: {response.status_code}"
+    except Exception as e:
+        return str(e)
+
+
     
 def normalize(text):
     return re.sub(r'^[.!?,;:\s]+|[.!?,;:\s]+$', '', text.strip().lower())
@@ -147,6 +139,7 @@ def addDiffStyles(stylizedHTML, diffs):
 
 st.set_page_config(layout="wide")
 st.title("Book Diff Tool")
+cloudscraper = cloudscraper.create_scraper()
 
 # Initialize step
 if "step" not in st.session_state:
@@ -246,4 +239,9 @@ elif st.session_state.step == 3:
     st.write(f"Time taken: {time.time() - start:.2f} seconds")
     if st.button("Reset"):
         st.session_state.step = 1
+        st.rerun()
+    #if the user wants to switch between styled and plain, we can just re-run step 3 with the new setting
+    if st.button(f"Compare {'without' if needStyles else 'with'} styles"):
+        st.session_state.needStyles = not needStyles
+        st.session_state.step = 3
         st.rerun()
