@@ -99,6 +99,7 @@ def addDiffStyles(stylizedHTML, diffs):
         
         # Step 1: escape the raw diff text
         pattern = re.escape(diff)
+        pattern = re.sub(r'↵', '', pattern)  # Remove any ↵ characters from the pattern
         
         # Step 2: insert TAG between every character of the escaped pattern
         # BUT we must treat multi-char escape sequences (like \() as single units
@@ -147,19 +148,31 @@ if st.session_state.step == 1:
     st.session_state.needStyles = st.checkbox("Keep original styles?", value=True)
     needStyles = st.session_state.needStyles
     link1 = st.text_input("Enter Link 1")
-    #add button to auto fill links
-    if st.button("Fill Test Links"):
-        link1 = "https://ecampusontario.pressbooks.pub/orgbiochemsupplement/chapter/alkanes-alkenes-alkynes/"
-        st.session_state.link1 = link1
-        link2 = "https://boisestate.pressbooks.pub/chemistry/chapter/21-1-hydrocarbons/"
-        st.session_state.link2 = link2
-        st.session_state.step = 3
-        st.rerun()
 
-    if st.button("Next") and link1.strip():
-        st.session_state.link1 = link1.strip()
-        st.session_state.step = 2
-        st.rerun()
+    #add button to auto fill links
+    if test := st.checkbox("Use test links?"):
+        #dropdown with 2 options, one for each test link set
+        test_set = st.selectbox("Select test set", ["Set 1", "Set 2", "Set 3"])
+        if test_set == "Set 1":
+            link1 = "https://ecampusontario.pressbooks.pub/commbusprofcdn/chapter/the-evolution-of-digital-media/"
+            link2 = "https://ecampusontario.pressbooks.pub/llsadvcomm/chapter/7-1-the-evolution-of-digital-media/"
+        elif test_set == "Set 2":
+            link1 = "https://openoregon.pressbooks.pub/comm115/chapter/chapter-3"
+            link2 = "https://socialsci.libretexts.org/Bookshelves/Communication/Intercultural_Communication/Book%3A_Intercultural_Communication_for_the_Community_College_(Karen_Krumrey-Fulks)/01%3A_Chapters/1.04%3A_Self_and_Identity"
+        elif test_set == "Set 3":
+            link1 = "https://ecampusontario.pressbooks.pub/orgbiochemsupplement/chapter/alkanes-alkenes-alkynes/"
+            link2 = "https://boisestate.pressbooks.pub/chemistry/chapter/21-1-hydrocarbons/"
+        if link1 and link2:
+            if st.button("Next"):
+                st.session_state.link1 = link1.strip()
+                st.session_state.link2 = link2.strip()
+                st.session_state.step = 3
+                st.rerun()
+    else:
+        if st.button("Next") and link1.strip():
+            st.session_state.link1 = link1.strip()
+            st.session_state.step = 2
+            st.rerun()
 
 # STEP 2 — Ask for Link 2
 elif st.session_state.step == 2:
@@ -210,8 +223,6 @@ elif st.session_state.step == 3:
         unique1, unique2 = get_unique_content(displayStrip1, displayStrip2)
         diffs1 = {d.strip().lower() for d in unique1 if len(d.strip()) > 3}
         diffs2 = {d.strip().lower() for d in unique2 if len(d.strip()) > 3}
-        with open("diffs1.txt", "w", encoding="utf-8") as f:
-            f.write("\n\ndiff: ".join(diffs2))
 
         highlighted1 = addDiffStyles(inlined1, diffs1)
         highlighted2 = addDiffStyles(inlined2, diffs2)
