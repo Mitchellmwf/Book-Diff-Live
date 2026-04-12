@@ -68,15 +68,6 @@ def get_unique_content(list1, list2):
         # 'equal' blocks are shared, skip them
     return unique1, unique2
 
-def splitNewlines(list):
-    newList = []
-    for item in list:
-        if "\n" in item:
-            newList.extend(item.split("\n"))
-        else:
-            newList.append(item)
-    return newList
-
 # Function to check if URL is valid and accessible
 def checkURL(url):
     if url is None or not re.match(r'^https?://', url):
@@ -88,15 +79,12 @@ def checkURL(url):
     except Exception:
         return False
 
-
 def urlResponse(url):
     try:
         response = cloudscraper.get(url)
         return f"Status code: {response.status_code}"
     except Exception as e:
         return str(e)
-
-
     
 def normalize(text):
     return re.sub(r'^[.!?,;:\s]+|[.!?,;:\s]+$', '', text.strip().lower())
@@ -222,10 +210,11 @@ elif st.session_state.step == 3:
         unique1, unique2 = get_unique_content(displayStrip1, displayStrip2)
         diffs1 = {d.strip().lower() for d in unique1 if len(d.strip()) > 3}
         diffs2 = {d.strip().lower() for d in unique2 if len(d.strip()) > 3}
+        with open("diffs1.txt", "w", encoding="utf-8") as f:
+            f.write("\n\ndiff: ".join(diffs2))
 
-
-        highlighted1 = addDiffStyles(inlined1, splitNewlines(diffs1))
-        highlighted2 = addDiffStyles(inlined2, splitNewlines(diffs2))
+        highlighted1 = addDiffStyles(inlined1, diffs1)
+        highlighted2 = addDiffStyles(inlined2, diffs2)
 
 
         highlighted_html = open("template.html", "r", encoding="utf-8").read()
