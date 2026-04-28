@@ -34,7 +34,7 @@ def inline_css(html_bytes, base_url):
     soup = BeautifulSoup(html_bytes, "html.parser")
 
     #remove head if styling setting is enabled
-    if needStyles == False:
+    if st.session_state.needStyles == False:
         for tag in soup.find_all("head"):
             tag.decompose()
     # Remove content we dont want to display
@@ -162,7 +162,6 @@ if st.session_state.step == 1:
 
     # Add checkbox for needStyles
     st.session_state.needStyles = st.checkbox("Keep original styles?", value=True)
-    needStyles = st.session_state.needStyles
     
     # Add button for manual HTML input, which skips the URL steps and goes straight to a modified HTML input flow
     if st.button("Manual HTML input"):
@@ -233,7 +232,7 @@ elif st.session_state.step == 3 or st.session_state.step == 5:
         st.write("Link 2:", st.session_state.link2)
     # Manual html mode
     elif st.session_state.step == 5:
-        #needStyles = False
+        #st.session_state.needStyles = False
         st.write("Comparing manual HTML input…")
         st.session_state.link1 = None
         st.session_state.link2 = None
@@ -279,7 +278,7 @@ elif st.session_state.step == 3 or st.session_state.step == 5:
         highlighted_html = open("template.html", "r", encoding="utf-8").read()
         highlighted_html = highlighted_html.replace("{{page1}}", highlighted1)
         highlighted_html = highlighted_html.replace("{{page2}}", highlighted2)
-        if not needStyles:
+        if not st.session_state.needStyles:
             highlighted_html = highlighted_html.replace("{{customStyles}}", """
                 body div div {
                             overflow: hidden;
@@ -298,8 +297,8 @@ elif st.session_state.step == 3 or st.session_state.step == 5:
         st.session_state.step = 1
         st.rerun()
     # If the user wants to switch between styled and plain, we can just re-run step 3 with the new setting
-    if st.button(f"Compare {'without' if needStyles else 'with'} styles"):
-        st.session_state.needStyles = not needStyles
+    if st.button(f"Compare {'without' if st.session_state.needStyles else 'with'} styles"):
+        st.session_state.needStyles = not st.session_state.needStyles
         st.session_state.step = 3
         st.rerun()
 
@@ -308,7 +307,7 @@ elif st.session_state.step == 4:
     st.write("Manual HTML input mode")
     html1 = st.text_area("Enter HTML for Page 1")
     html2 = st.text_area("Enter HTML for Page 2")
-    needStyles = st.checkbox("Keep original styles?", value=True)
+    st.session_state.needStyles = st.checkbox("Keep original styles?", value=True)
 
     if st.button("Compare") and html1.strip() and html2.strip():
         st.session_state.link1 = "Manual Input 1"
