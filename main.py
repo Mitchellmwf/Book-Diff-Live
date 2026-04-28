@@ -308,6 +308,7 @@ elif st.session_state.step == 4:
     st.write("Manual HTML input mode")
     html1 = st.text_area("Enter HTML for Page 1")
     html2 = st.text_area("Enter HTML for Page 2")
+    needStyles = st.checkbox("Keep original styles?", value=True)
 
     if st.button("Compare") and html1.strip() and html2.strip():
         st.session_state.link1 = "Manual Input 1"
