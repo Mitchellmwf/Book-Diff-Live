@@ -224,24 +224,39 @@ elif st.session_state.step == 2:
             st.rerun()
 
 # STEP 3 — Show results
-elif st.session_state.step == 3:
+elif st.session_state.step == 3 or st.session_state.step == 5:
     start = time.time()
-    st.write("Comparing pages…")
-    st.write("Link 1:", st.session_state.link1)
-    st.write("Link 2:", st.session_state.link2)
+    # Link mode
+    if st.session_state.step == 3:
+        st.write("Comparing pages…")
+        st.write("Link 1:", st.session_state.link1)
+        st.write("Link 2:", st.session_state.link2)
+    # Manual html mode
+    elif st.session_state.step == 5:
+        #needStyles = False
+        st.write("Comparing manual HTML input…")
+        st.session_state.link1 = None
+        st.session_state.link2 = None
+
     # Add spinning animation while processing
     with st.spinner("Highlighting differences..."):
         link1 = st.session_state.link1
         link2 = st.session_state.link2
 
         # Fetch, parse, and split the text content into lists after normalizing. This is used for the difflib comparison to find unique content. Also keep the raw HTML for styling and display later.
-        data = fetch(link1)
+        if link1:
+            data = fetch(link1)
+        else:
+            data = st.session_state.data
         soupifiedData = BeautifulSoup(data, "html.parser")
         displayedText = soupifiedData.get_text().lower()
         displayedList = re.split(splitChars, displayedText)
         displayStrip1 = [line.strip() for line in displayedList]
 
-        data2 = fetch(link2)
+        if link2:
+            data2 = fetch(link2)
+        else:
+            data2 = st.session_state.data2
         soupifiedData2 = BeautifulSoup(data2, "html.parser")
         displayedText2 = soupifiedData2.get_text().lower()
         displayedList2 = re.split(splitChars, displayedText2)
@@ -302,60 +317,3 @@ elif st.session_state.step == 4:
         st.session_state.step = 5
         st.rerun()
 
-elif st.session_state.step == 5:
-    needStyles = False
-    start = time.time()
-    st.write("Comparing pages…")
-    st.write("Link 1:", st.session_state.link1)
-    st.write("Link 2:", st.session_state.link2)
-    
-    with st.spinner("Highlighting differences..."):
-        
-        soupifiedData = BeautifulSoup(st.session_state.data, "html.parser")
-        displayedText = soupifiedData.get_text().lower()
-        displayedList = re.split(splitChars, displayedText)
-        displayStrip1 = [line.strip() for line in displayedList]
-
-
-
-        soupifiedData2 = BeautifulSoup(st.session_state.data2, "html.parser")
-        displayedText2 = soupifiedData2.get_text().lower()
-        displayedList2 = re.split(splitChars, displayedText2)
-        displayStrip2 = [line.strip() for line in displayedList2]
-
-        # then replace your set subtraction with:
-        unique1, unique2 = get_unique_content(displayStrip1, displayStrip2)
-        diffs1 = {d.strip().lower() for d in unique1 if len(d.strip()) > 3}
-        diffs2 = {d.strip().lower() for d in unique2 if len(d.strip()) > 3}
-
-        inlined1 = inline_css(st.session_state.data, None)
-        inlined2 = inline_css(st.session_state.data2, None)
-
-        try:
-            highlighted1 = addDiffStyles(inlined1, diffs1)
-            highlighted2 = addDiffStyles(inlined2, diffs2)
-        except Exception as e:
-            st.error(f"Error highlighting differences: {e}")
-            highlighted1 = str(soupifiedData)
-            highlighted2 = str(soupifiedData2)
-
-        highlighted_html = open("template.html", "r", encoding="utf-8").read()
-        highlighted_html = highlighted_html.replace("{{page1}}", str(highlighted1))
-        highlighted_html = highlighted_html.replace("{{page2}}", str(highlighted2))
-        if not needStyles:
-            highlighted_html = highlighted_html.replace("{{customStyles}}", """
-                body div div {
-                            overflow: hidden;
-                            width: auto;
-                        }
-                figcaption, img {
-                    max-width: 30vw;
-                    height: auto;
-                }
-            """)
-
-    st.iframe(highlighted_html, height=800)
-    st.write(f"Time taken: {time.time() - start:.2f} seconds")
-    if st.button("Reset"):
-        st.session_state.step = 1
-        st.rerun()
