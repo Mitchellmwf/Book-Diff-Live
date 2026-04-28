@@ -13,7 +13,7 @@ import time
 import cloudscraper
 
 # Set to true to enable test links and auto-fill 
-testMode = False
+testMode = True
 
 #Variables
 splitChars = r'(?<=[.!?])\s+|\n+'
@@ -277,7 +277,7 @@ elif st.session_state.step == 3:
             """)
 
     # Display the final highlighted HTML in a scrollable container, and show the time taken for the comparison. Also provide buttons to reset the flow or switch between styled and plain views, which re-runs step 3 with the new setting.
-    st.components.v1.html(highlighted_html, scrolling=True, height=800)
+    st.iframe(highlighted_html, height=800)
     st.write(f"Time taken: {time.time() - start:.2f} seconds")
     if st.button("Reset"):
         st.session_state.step = 1
@@ -354,7 +354,7 @@ elif st.session_state.step == 5:
                 }
             """)
 
-    st.components.v1.html(highlighted_html, scrolling=True, height=800)
+    st.iframe(highlighted_html, height=800)
     st.write(f"Time taken: {time.time() - start:.2f} seconds")
     if st.button("Reset"):
         st.session_state.step = 1
