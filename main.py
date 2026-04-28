@@ -1,5 +1,5 @@
 '''
-Mitchellmwf: Book-Diff-Live
+github: Mitchellmwf - Book-Diff-Live
 
 This streamlit application allows users to input two URLs, fetches the content of those pages, and highlights the unique content on each page. It uses BeautifulSoup to parse the HTML and difflib to find differences in the text content. The application also provides an option to keep or remove original styles from the pages for easier comparison. Users can also manually input HTML for comparison instead of URLs.
 
@@ -13,7 +13,7 @@ import time
 import cloudscraper
 
 # Set to true to enable test links and auto-fill 
-testMode = True
+testMode = False
 
 #Variables
 splitChars = r'(?<=[.!?])\s+|\n+'
@@ -149,7 +149,7 @@ def addDiffStyles(stylizedHTML, diffs):
 
 #    Streamlit UI and initialization
 st.set_page_config(layout="wide")
-st.title("Unique Page Content Highlighter")
+st.title("HTML difference highlighter")
 cloudscraper = cloudscraper.create_scraper()
 
 # Initialize step which controls the flow of the application
